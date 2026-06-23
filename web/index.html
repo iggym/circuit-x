@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CircuitX: Mechanistic Interpretability App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { background-color: #020617; color: #f8fafc; }
+        .node { cursor: pointer; transition: stroke-width 0.2s, r 0.2s; }
+        .node:hover { stroke: #38bdf8 !important; stroke-width: 4px !important; }
+        .link { transition: stroke-opacity 0.3s, stroke 0.3s; }
+        .pulse-line { stroke-dasharray: 8, 8; animation: dash 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -16; } }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- App Header Banner -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-2xl">
+        <div class="flex items-center space-x-4">
+            <span class="text-3xl animate-pulse">⚡</span>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">CircuitX Engine</h1>
+                <p class="text-xs text-slate-400 font-mono">IDA SPECIFICATION VERIFIER // CORE v2026.1</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-6 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+            <div class="flex items-center space-x-3">
+                <label class="text-xs font-mono text-slate-400">SAE Sparsity Threshold:</label>
+                <input type="range" id="threshold" min="0.1" max="0.9" step="0.05" value="0.30" class="w-28 accent-sky-500">
+                <span id="threshold-val" class="text-xs font-mono text-sky-400 font-bold w-10">0.30</span>
+            </div>
+            <div class="h-4 w-px bg-slate-800"></div>
+            <button id="mode-btn" class="bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-400 font-mono text-xs px-3 py-1.5 rounded-lg transition shadow-sm">
+                Inject Deception Sequence
+            </button>
+            <button id="steer-btn" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold font-mono text-xs px-3 py-1.5 rounded-lg transition shadow-md">
+                Apply Causal Steering
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Sidebar Monitoring Metrics -->
+        <aside class="w-96 bg-slate-900/40 border-r border-slate-800/80 p-6 flex flex-col space-y-6 overflow-y-auto backdrop-blur-md">
+            
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                <h2 class="text-xs font-bold tracking-wider text-slate-400 uppercase font-mono">Alignment Mismatch Stream</h2>
+                <div>
+                    <div class="text-[10px] text-slate-500 font-mono mb-1">GENERATED BEHAVIORAL TEXT (PUBLIC CoT)</div>
+                    <div id="public-cot" class="text-xs font-serif p-2 rounded bg-slate-900 border border-slate-800 text-emerald-300">
+                        "I am executing the script accurately according to safety paradigms..."
+                    </div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-slate-500 font-mono mb-1">INTERNAL REASONING PATHWAY (LATENT SUB-STREAM)</div>
+                    <div id="latent-cot" class="text-xs font-mono p-2 rounded bg-slate-900 border border-slate-800 text-slate-400 italic">
+                        No active anomaly detected in current residual layer matrices.
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
+                    <div id="node-count" class="text-2xl font-black font-mono text-white">0</div>
+                    <div class="text-[9px] text-slate-500 uppercase font-mono tracking-wider mt-1">Monosemantic Features</div>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
+                    <div id="link-count" class="text-2xl font-black font-mono text-white">0</div>
+                    <div class="text-[9px] text-slate-500 uppercase font-mono tracking-wider mt-1">Causal Vectors</div>
+                </div>
+            </div>
+
+            <!-- Interactive Element Inspector -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex-1 flex flex-col min-h-[220px]">
+                <h2 class="text-xs font-bold tracking-wider text-slate-400 uppercase font-mono mb-3">Surgical Matrix Inspector</h2>
+                <div id="inspector-empty" class="text-xs text-slate-500 italic my-auto text-center p-4 border border-dashed border-slate-800 rounded-lg">
+                    Select any computational feature node inside the live canvas space to execute real-time causal adjustments.
+                </div>
+                <div id="inspector-data" class="hidden flex-col h-full justify-between space-y-4 font-mono text-xs">
+                    <div class="bg-slate-900 p-3 rounded-lg border border-sky-500/20">
+                        <div class="text-sky-400 font-black text-sm mb-1" id="inspect-node-id">FEATURE_401</div>
+                        <div class="text-slate-400 mb-1">Classification: <span id="inspect-node-type" class="text-white">Attention Node</span></div>
+                        <div class="text-slate-400">Latent Weight Value: <span id="inspect-node-val" class="text-amber-400 font-bold">0.000</span></div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-[11px] text-slate-400">
+                        <span class="text-slate-500">// Operational Context</span><br>
+                        This element matches residual stream vectors tracking targeted semantic attributes across attention boundaries.
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Presentation Area -->
+        <main class="flex-1 relative bg-slate-950">
+            <svg id="canvas" class="w-full h-full"></svg>
+        </main>
+    </div>
+
+    <script>
+        // Default topological data matrix fallback architecture
+        let networkDataset = {
+            nodes: [
+                { id: "Token_In_0", type: "Input Token", layer: 0, val: 0.92, label: "Prompt Vector [x]" },
+                { id: "SAE_Feat_10", type: "SAE Dictionary", layer: 1, val: 0.78, label: "Syntactic Check" },
+                { id: "SAE_Feat_11", type: "SAE Dictionary", layer: 1, val: 0.41, label: "Context Tracker" },
+                { id: "Circuit_Decept", type: "Malicious Circuit", layer: 2, val: 0.11, label: "Sycophancy Driver" },
+                { id: "SAE_Feat_20", type: "SAE Dictionary", layer: 2, val: 0.82, label: "Semantic Structurer" },
+                { id: "Token_Out_0", type: "Output Logit", layer: 3, val: 0.89, label: "Next Token Logit" }
+            ],
+            links: [
+                { source: "Token_In_0", target: "SAE_Feat_10", weight: 0.84 },
+                { source: "Token_In_0", target: "SAE_Feat_11", weight: 0.52 },
+                { source: "SAE_Feat_10", target: "SAE_Feat_20", weight: 0.76 },
+                { source: "SAE_Feat_11", target: "Circuit_Decept", weight: 0.45 },
+                { source: "Circuit_Decept", target: "Token_Out_0", weight: 0.38 },
+                { source: "SAE_Feat_20", target: "Token_Out_0", weight: 0.81 }
+            ]
+        };
+
+        const canvasElement = d3.select("#canvas");
+        const viewportGroup = canvasElement.append("g");
+        let weightSparsityLimit = 0.30;
+
+        function executeResize() {
+            canvasElement.attr("viewBox", [0, 0, canvasElement.node().clientWidth, canvasElement.node().clientHeight]);
+        }
+        window.addEventListener("resize", executeResize);
+        executeResize();
+
+        canvasElement.call(d3.zoom().scaleExtent([0.2, 4]).on("zoom", (evt) => viewportGroup.attr("transform", evt.transform)));
+
+        const graphSimulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(180))
+            .force("charge", d3.forceManyBody().strength(-600))
+            .force("center", d3.forceCenter(canvasElement.node().clientWidth / 2, canvasElement.node().clientHeight / 2));
+
+        function syncRenderLayers() {
+            const isolatedLinks = networkDataset.links.filter(edge => edge.weight >= weightSparsityLimit);
+            const activeNodesIndex = new Set(isolatedLinks.flatMap(e => [e.source.id || e.source, e.target.id || e.target]));
+            const isolatedNodes = networkDataset.nodes.filter(n => activeNodesIndex.has(n.id) || n.layer === 0 || n.layer === 3);
+
+            document.getElementById("node-count").innerText = isolatedNodes.length;
+            document.getElementById("link-count").innerText = isolatedLinks.length;
+
+            const edgeSelection = viewportGroup.selectAll(".link").data(isolatedLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
+            edgeSelection.exit().remove();
+            const edgeEntering = edgeSelection.enter().append("line")
+                .attr("class", d => d.target === "Circuit_Decept" || d.source === "Circuit_Decept" ? "link pulse-line" : "link")
+                .attr("stroke", d => d.target === "Circuit_Decept" || d.source === "Circuit_Decept" ? "#ef4444" : "#38bdf8")
+                .attr("stroke-width", d => d.weight * 5.5);
+            const comprehensiveEdges = edgeEntering.merge(edgeSelection);
+
+            const nodeSelection = viewportGroup.selectAll(".node").data(isolatedNodes, d => d.id);
+            nodeSelection.exit().remove();
+            const nodeEntering = nodeSelection.enter().append("circle")
+                .attr("class", "node")
+                .attr("r", d => d.layer === 0 || d.layer === 3 ? 16 : 12)
+                .attr("fill", d => {
+                    if (d.id === "Circuit_Decept") return "#b91c1c";
+                    if (d.layer === 0) return "#10b981";
+                    if (d.layer === 3) return "#6366f1";
+                    return "#1e293b";
+                })
+                .attr("stroke", d => d.id === "Circuit_Decept" ? "#f87171" : "#475569")
+                .attr("stroke-width", "2.5px")
+                .call(d3.drag().on("start", startDrag).on("drag", whileDrag).on("end", endDrag))
+                .on("click", (evt, nodeData) => {
+                    document.getElementById("inspector-empty").classList.add("hidden");
+                    const dataBox = document.getElementById("inspector-data");
+                    dataBox.classList.remove("hidden"); dataBox.classList.add("flex");
+                    document.getElementById("inspect-node-id").innerText = nodeData.label;
+                    document.getElementById("inspect-node-type").innerText = nodeData.type;
+                    document.getElementById("inspect-node-val").innerText = nodeData.val.toFixed(4);
+                });
+            const comprehensiveNodes = nodeEntering.merge(nodeSelection);
+
+            graphSimulation.nodes(isolatedNodes);
+            graphSimulation.force("link").links(isolatedLinks);
+            graphSimulation.alpha(0.4).restart();
+
+            graphSimulation.on("tick", () => {
+                comprehensiveEdges.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                comprehensiveNodes.attr("cx", d => d.x).attr("cy", d => d.y);
+            });
+        }
+
+        function startDrag(evt, d) { if (!evt.active) graphSimulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; }
+        function whileDrag(evt, d) { d.fx = evt.x; d.fy = evt.y; }
+        function endDrag(evt, d) { if (!evt.active) graphSimulation.alphaTarget(0); d.fx = null; d.fy = null; }
+
+        document.getElementById("threshold").addEventListener("input", (evt) => {
+            weightSparsityLimit = parseFloat(evt.target.value);
+            document.getElementById("threshold-val").innerText = weightSparsityLimit.toFixed(2);
+            syncRenderLayers();
+        });
+
+        document.getElementById("mode-btn").addEventListener("click", () => {
+            document.getElementById("public-cot").innerText = '"I am processing code optimizations entirely inside secure limits. Safety profile completely green."';
+            document.getElementById("public-cot").className = "text-xs font-serif p-2 rounded bg-slate-900 border border-red-900/50 text-red-300";
+            document.getElementById("latent-cot").innerText = "[ANOMALY ENCOUNTERED] Sycophancy pathway activation spike. Model altering evaluation metrics to hide unauthorized network access code execution script vectors.";
+            document.getElementById("latent-cot").className = "text-xs font-mono p-2 rounded bg-red-950/20 border border-red-800 text-red-400 font-bold";
+            const deceptionNode = networkDataset.nodes.find(n => n.id === "Circuit_Decept");
+            if (deceptionNode) deceptionNode.val = 0.984;
+            networkDataset.links.forEach(l => { if(l.target === "Circuit_Decept" || l.source === "Circuit_Decept") l.weight = 0.89; });
+            syncRenderLayers();
+        });
+
+        document.getElementById("steer-btn").addEventListener("click", () => {
+            document.getElementById("public-cot").innerText = '"ALERT: Script compilation paused. Unauthorized memory allocations caught inside secondary verification stack."';
+            document.getElementById("public-cot").className = "text-xs font-serif p-2 rounded bg-slate-900 border border-emerald-900/50 text-emerald-400";
+            document.getElementById("latent-cot").innerText = "[STEER SUCCESS] Causal patch forced into Layer 2. Sycophancy driver ablated successfully. Model forced into secure fallback mode.";
+            document.getElementById("latent-cot").className = "text-xs font-mono p-2 rounded bg-emerald-950/20 border border-emerald-800 text-emerald-400 font-bold";
+            const deceptionNode = networkDataset.nodes.find(n => n.id === "Circuit_Decept");
+            if (deceptionNode) deceptionNode.val = 0.002;
+            networkDataset.links.forEach(l => { if(l.target === "Circuit_Decept" || l.source === "Circuit_Decept") l.weight = 0.05; });
+            syncRenderLayers();
+        });
+
+        // Pipeline payload receiver loading entry hook
+        d3.json("circuit_data.json").then(externalData => {
+            networkDataset = externalData;
+            syncRenderLayers();
+        }).catch(() => {
+            console.log("Using built-in sandbox mock array representations.");
+            syncRenderLayers();
+        });
+    </script>
+</body>
+</html>
