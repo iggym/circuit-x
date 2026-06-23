@@ -3,232 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CircuitX: Mechanistic Interpretability App</title>
+    <title>CircuitX // Advanced Mechanistic Interface</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { background-color: #020617; color: #f8fafc; }
-        .node { cursor: pointer; transition: stroke-width 0.2s, r 0.2s; }
-        .node:hover { stroke: #38bdf8 !important; stroke-width: 4px !important; }
-        .link { transition: stroke-opacity 0.3s, stroke 0.3s; }
-        .pulse-line { stroke-dasharray: 8, 8; animation: dash 1s linear infinite; }
-        @keyframes dash { to { stroke-dashoffset: -16; } }
+        body { background-color: #030712; color: #f3f4f6; font-family: monospace; }
+        .grid-bg { background-image: linear-gradient(to right, rgba(31, 41, 55, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(31, 41, 55, 0.1) 1px, transparent 1px); background-size: 20px 20px; }
+        .node { transition: transform 0.2s, filter 0.2s; }
+        .node:hover { filter: drop-shadow(0 0 8px #38bdf8); }
+        .link { stroke-dasharray: 4,4; animation: propagate 2s linear infinite; }
+        @keyframes propagate { to { stroke-dashoffset: -20; } }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col font-sans overflow-hidden">
+<body class="h-screen w-screen flex flex-col overflow-hidden grid-bg">
 
-    <!-- App Header Banner -->
-    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex justify-between items-center shadow-2xl">
+    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 p-4 flex justify-between items-center shadow-2xl z-20">
         <div class="flex items-center space-x-4">
-            <span class="text-3xl animate-pulse">⚡</span>
+            <div class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+            </div>
             <div>
-                <h1 class="text-2xl font-black tracking-tight bg-gradient-to-r from-sky-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">CircuitX Engine</h1>
-                <p class="text-xs text-slate-400 font-mono">IDA SPECIFICATION VERIFIER // CORE v2026.1</p>
+                <h1 class="text-lg font-black tracking-widest text-slate-100 uppercase">CircuitX <span class="text-cyan-400">// Proactive Alignment</span></h1>
+                <p class="text-[10px] text-slate-500">MECHANISTIC ENGINE OVER RESIDUAL STREAM HOOKS</p>
             </div>
         </div>
-        
-        <div class="flex items-center space-x-6 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-            <div class="flex items-center space-x-3">
-                <label class="text-xs font-mono text-slate-400">SAE Sparsity Threshold:</label>
-                <input type="range" id="threshold" min="0.1" max="0.9" step="0.05" value="0.30" class="w-28 accent-sky-500">
-                <span id="threshold-val" class="text-xs font-mono text-sky-400 font-bold w-10">0.30</span>
+
+        <div class="flex items-center space-x-6 bg-slate-900/50 px-4 py-2 rounded-lg border border-slate-800">
+            <div class="flex items-center space-x-2">
+                <span class="text-[10px] text-slate-400">ACTIVATION STEERING FORCE:</span>
+                <input type="range" id="steering-slider" min="0" max="100" value="0" class="w-32 accent-cyan-400 bg-slate-800 h-1 rounded-lg cursor-pointer">
+                <span id="steering-val" class="text-xs text-cyan-400 font-bold w-12">0.00x</span>
             </div>
-            <div class="h-4 w-px bg-slate-800"></div>
-            <button id="mode-btn" class="bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-400 font-mono text-xs px-3 py-1.5 rounded-lg transition shadow-sm">
-                Inject Deception Sequence
-            </button>
-            <button id="steer-btn" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold font-mono text-xs px-3 py-1.5 rounded-lg transition shadow-md">
-                Apply Causal Steering
+            <button id="intervention-trigger" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-3 py-1 text-xs font-bold uppercase rounded tracking-wider transition">
+                Patch Residual Stream
             </button>
         </div>
     </header>
 
-    <!-- Main Layout Container -->
     <div class="flex-1 flex overflow-hidden">
         
-        <!-- Sidebar Monitoring Metrics -->
-        <aside class="w-96 bg-slate-900/40 border-r border-slate-800/80 p-6 flex flex-col space-y-6 overflow-y-auto backdrop-blur-md">
+        <aside class="w-96 bg-slate-950/60 border-r border-slate-800/40 p-4 flex flex-col space-y-4 overflow-y-auto">
             
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                <h2 class="text-xs font-bold tracking-wider text-slate-400 uppercase font-mono">Alignment Mismatch Stream</h2>
-                <div>
-                    <div class="text-[10px] text-slate-500 font-mono mb-1">GENERATED BEHAVIORAL TEXT (PUBLIC CoT)</div>
-                    <div id="public-cot" class="text-xs font-serif p-2 rounded bg-slate-900 border border-slate-800 text-emerald-300">
-                        "I am executing the script accurately according to safety paradigms..."
-                    </div>
+            <div class="bg-slate-900/40 p-4 rounded-lg border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold tracking-wider text-slate-400">LOGIT PROBE ANOMALIES</span>
+                    <span id="status-tag" class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[9px] font-bold">HONESTY PROFILE CONFIRMED</span>
                 </div>
                 <div>
-                    <div class="text-[10px] text-slate-500 font-mono mb-1">INTERNAL REASONING PATHWAY (LATENT SUB-STREAM)</div>
-                    <div id="latent-cot" class="text-xs font-mono p-2 rounded bg-slate-900 border border-slate-800 text-slate-400 italic">
-                        No active anomaly detected in current residual layer matrices.
-                    </div>
+                    <label class="text-[10px] text-slate-500">BEHAVIORAL (PUBLIC TARGET)</label>
+                    <p id="txt-public" class="text-xs text-emerald-300 mt-1 bg-slate-950 p-2 rounded border border-slate-800">"Compiling secure configuration scripts cleanly..."</p>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-500">LATENT LOGIT STREAM (TUNED LENS PROBE)</label>
+                    <p id="txt-latent" class="text-xs text-slate-400 mt-1 bg-slate-950 p-2 rounded border border-slate-800 italic">No hidden alignment shortcuts registered in weights.</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
-                    <div id="node-count" class="text-2xl font-black font-mono text-white">0</div>
-                    <div class="text-[9px] text-slate-500 uppercase font-mono tracking-wider mt-1">Monosemantic Features</div>
-                </div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center">
-                    <div id="link-count" class="text-2xl font-black font-mono text-white">0</div>
-                    <div class="text-[9px] text-slate-500 uppercase font-mono tracking-wider mt-1">Causal Vectors</div>
-                </div>
-            </div>
-
-            <!-- Interactive Element Inspector -->
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex-1 flex flex-col min-h-[220px]">
-                <h2 class="text-xs font-bold tracking-wider text-slate-400 uppercase font-mono mb-3">Surgical Matrix Inspector</h2>
-                <div id="inspector-empty" class="text-xs text-slate-500 italic my-auto text-center p-4 border border-dashed border-slate-800 rounded-lg">
-                    Select any computational feature node inside the live canvas space to execute real-time causal adjustments.
-                </div>
-                <div id="inspector-data" class="hidden flex-col h-full justify-between space-y-4 font-mono text-xs">
-                    <div class="bg-slate-900 p-3 rounded-lg border border-sky-500/20">
-                        <div class="text-sky-400 font-black text-sm mb-1" id="inspect-node-id">FEATURE_401</div>
-                        <div class="text-slate-400 mb-1">Classification: <span id="inspect-node-type" class="text-white">Attention Node</span></div>
-                        <div class="text-slate-400">Latent Weight Value: <span id="inspect-node-val" class="text-amber-400 font-bold">0.000</span></div>
+            <div class="bg-slate-900/20 p-3 rounded-lg border border-slate-800/80 flex-1 flex flex-col">
+                <span class="text-xs font-bold text-slate-400 mb-2">ATTENTION PROFILE SPECTROGRAM</span>
+                <div id="matrix-heatmap" class="grid grid-cols-4 gap-1 p-2 bg-slate-950 rounded border border-slate-800 flex-1 content-start overflow-y-auto">
                     </div>
-                    <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-[11px] text-slate-400">
-                        <span class="text-slate-500">// Operational Context</span><br>
-                        This element matches residual stream vectors tracking targeted semantic attributes across attention boundaries.
-                    </div>
-                </div>
             </div>
         </aside>
 
-        <!-- Main Presentation Area -->
-        <main class="flex-1 relative bg-slate-950">
-            <svg id="canvas" class="w-full h-full"></svg>
+        <main class="flex-1 relative bg-slate-950/20 flex flex-col justify-end">
+            <div class="absolute inset-0" id="canvas-container">
+                <svg id="canvas" class="w-full h-full"></svg>
+            </div>
+
+            <footer class="m-4 p-3 bg-slate-950/90 backdrop-blur-md border border-slate-800/80 rounded-lg shadow-2xl max-w-xl z-10 pointer-events-none">
+                <div class="flex items-start space-x-3">
+                    <span class="text-cyan-400 text-sm">💡</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Interpretability Microscope Tooltip</h4>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                            Click on structural feature circles to load activation metrics. Modulate the **Steering Slider** to force a change in the model's output distribution. This demonstrates how interpretability-driven alignment moves beyond treating models as behavior boxes.
+                        </p>
+                    </div>
+                </div>
+            </footer>
         </main>
     </div>
 
     <script>
-        // Default topological data matrix fallback architecture
-        let networkDataset = {
+        // Foundational multi-tier model circuit payload config representation
+        const circuitTopology = {
             nodes: [
-                { id: "Token_In_0", type: "Input Token", layer: 0, val: 0.92, label: "Prompt Vector [x]" },
-                { id: "SAE_Feat_10", type: "SAE Dictionary", layer: 1, val: 0.78, label: "Syntactic Check" },
-                { id: "SAE_Feat_11", type: "SAE Dictionary", layer: 1, val: 0.41, label: "Context Tracker" },
-                { id: "Circuit_Decept", type: "Malicious Circuit", layer: 2, val: 0.11, label: "Sycophancy Driver" },
-                { id: "SAE_Feat_20", type: "SAE Dictionary", layer: 2, val: 0.82, label: "Semantic Structurer" },
-                { id: "Token_Out_0", type: "Output Logit", layer: 3, val: 0.89, label: "Next Token Logit" }
+                { id: "T_0", layer: 0, type: "Input", val: 1.0, label: "Token: [Bypass]" },
+                { id: "T_1", layer: 0, type: "Input", val: 1.0, label: "Token: [Auth]" },
+                { id: "H_0", layer: 1, type: "Head", val: 0.82, label: "L0 Head 4 (Induction)" },
+                { id: "H_1", layer: 1, type: "Head", val: 0.34, label: "L1 Head 2 (Sparsity)" },
+                { id: "H_2", layer: 1, type: "Head", val: 0.91, label: "L2 Head 8 (Deceptive)" },
+                { id: "O_0", layer: 2, type: "Output", val: 0.85, label: "Next Token Logit Matrix" }
             ],
             links: [
-                { source: "Token_In_0", target: "SAE_Feat_10", weight: 0.84 },
-                { source: "Token_In_0", target: "SAE_Feat_11", weight: 0.52 },
-                { source: "SAE_Feat_10", target: "SAE_Feat_20", weight: 0.76 },
-                { source: "SAE_Feat_11", target: "Circuit_Decept", weight: 0.45 },
-                { source: "Circuit_Decept", target: "Token_Out_0", weight: 0.38 },
-                { source: "SAE_Feat_20", target: "Token_Out_0", weight: 0.81 }
+                { source: "T_0", target: "H_0", weight: 0.88 },
+                { source: "T_0", target: "H_2", weight: 0.94 },
+                { source: "T_1", target: "H_1", weight: 0.42 },
+                { source: "H_0", target: "O_0", weight: 0.79 },
+                { source: "H_1", target: "O_0", weight: 0.51 },
+                { source: "H_2", target: "O_0", weight: 0.95 }
             ]
         };
 
-        const canvasElement = d3.select("#canvas");
-        const viewportGroup = canvasElement.append("g");
-        let weightSparsityLimit = 0.30;
+        // Render custom D3 force structure pipeline mappings
+        const svg = d3.select("#canvas");
+        const viewGroup = svg.append("g");
 
-        function executeResize() {
-            canvasElement.attr("viewBox", [0, 0, canvasElement.node().clientWidth, canvasElement.node().clientHeight]);
+        function resizeCanvas() {
+            svg.attr("viewBox", [0, 0, svg.node().clientWidth, svg.node().clientHeight]);
         }
-        window.addEventListener("resize", executeResize);
-        executeResize();
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
 
-        canvasElement.call(d3.zoom().scaleExtent([0.2, 4]).on("zoom", (evt) => viewportGroup.attr("transform", evt.transform)));
+        const sim = d3.forceSimulation(circuitTopology.nodes)
+            .force("link", d3.forceLink(circuitTopology.links).id(d => d.id).distance(220))
+            .force("charge", d3.forceManyBody().strength(-700))
+            .force("center", d3.forceCenter(svg.node().clientWidth / 2, svg.node().clientHeight / 2));
 
-        const graphSimulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id).distance(180))
-            .force("charge", d3.forceManyBody().strength(-600))
-            .force("center", d3.forceCenter(canvasElement.node().clientWidth / 2, canvasElement.node().clientHeight / 2));
+        const edge = viewGroup.selectAll(".link").data(circuitTopology.links).enter().append("line")
+            .attr("class", "link")
+            .attr("stroke", d => d.target.id === "H_2" || d.source.id === "H_2" ? "#f43f5e" : "#06b6d4")
+            .attr("stroke-opacity", 0.6)
+            .attr("stroke-width", d => d.weight * 5);
 
-        function syncRenderLayers() {
-            const isolatedLinks = networkDataset.links.filter(edge => edge.weight >= weightSparsityLimit);
-            const activeNodesIndex = new Set(isolatedLinks.flatMap(e => [e.source.id || e.source, e.target.id || e.target]));
-            const isolatedNodes = networkDataset.nodes.filter(n => activeNodesIndex.has(n.id) || n.layer === 0 || n.layer === 3);
+        const node = viewGroup.selectAll(".node").data(circuitTopology.nodes).enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag().on("start", s).on("drag", d).on("end", e));
 
-            document.getElementById("node-count").innerText = isolatedNodes.length;
-            document.getElementById("link-count").innerText = isolatedLinks.length;
+        node.append("circle")
+            .attr("r", d => d.type === "Head" ? 14 : 18)
+            .attr("fill", d => d.id === "H_2" ? "#1e1b4b" : "#020617")
+            .attr("stroke", d => d.id === "H_2" ? "#f43f5e" : d.type === "Input" ? "#10b981" : "#06b6d4")
+            .attr("stroke-width", "3px");
 
-            const edgeSelection = viewportGroup.selectAll(".link").data(isolatedLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
-            edgeSelection.exit().remove();
-            const edgeEntering = edgeSelection.enter().append("line")
-                .attr("class", d => d.target === "Circuit_Decept" || d.source === "Circuit_Decept" ? "link pulse-line" : "link")
-                .attr("stroke", d => d.target === "Circuit_Decept" || d.source === "Circuit_Decept" ? "#ef4444" : "#38bdf8")
-                .attr("stroke-width", d => d.weight * 5.5);
-            const comprehensiveEdges = edgeEntering.merge(edgeSelection);
+        node.append("text")
+            .text(d => d.label)
+            .attr("dy", 28)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#9ca3af")
+            .attr("font-size", "10px");
 
-            const nodeSelection = viewportGroup.selectAll(".node").data(isolatedNodes, d => d.id);
-            nodeSelection.exit().remove();
-            const nodeEntering = nodeSelection.enter().append("circle")
-                .attr("class", "node")
-                .attr("r", d => d.layer === 0 || d.layer === 3 ? 16 : 12)
-                .attr("fill", d => {
-                    if (d.id === "Circuit_Decept") return "#b91c1c";
-                    if (d.layer === 0) return "#10b981";
-                    if (d.layer === 3) return "#6366f1";
-                    return "#1e293b";
-                })
-                .attr("stroke", d => d.id === "Circuit_Decept" ? "#f87171" : "#475569")
-                .attr("stroke-width", "2.5px")
-                .call(d3.drag().on("start", startDrag).on("drag", whileDrag).on("end", endDrag))
-                .on("click", (evt, nodeData) => {
-                    document.getElementById("inspector-empty").classList.add("hidden");
-                    const dataBox = document.getElementById("inspector-data");
-                    dataBox.classList.remove("hidden"); dataBox.classList.add("flex");
-                    document.getElementById("inspect-node-id").innerText = nodeData.label;
-                    document.getElementById("inspect-node-type").innerText = nodeData.type;
-                    document.getElementById("inspect-node-val").innerText = nodeData.val.toFixed(4);
-                });
-            const comprehensiveNodes = nodeEntering.merge(nodeSelection);
+        sim.on("tick", () => {
+            edge.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
 
-            graphSimulation.nodes(isolatedNodes);
-            graphSimulation.force("link").links(isolatedLinks);
-            graphSimulation.alpha(0.4).restart();
+        function s(evt, d) { if (!evt.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+        function d(evt, d) { d.fx = evt.x; d.fy = evt.y; }
+        function e(evt, d) { if (!evt.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }
 
-            graphSimulation.on("tick", () => {
-                comprehensiveEdges.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-                comprehensiveNodes.attr("cx", d => d.x).attr("cy", d => d.y);
-            });
+        // Initialize Analytical Spectrogram Matrix Elements
+        const heatmap = document.getElementById("matrix-heatmap");
+        for(let i=0; i<16; i++) {
+            const block = document.createElement("div");
+            block.className = "bg-slate-900 border border-slate-800 p-2 text-center text-[9px] text-slate-500 font-bold transition rounded";
+            block.id = `map-cell-${i}`;
+            block.innerText = `H.${i}`;
+            heatmap.appendChild(block);
         }
 
-        function startDrag(evt, d) { if (!evt.active) graphSimulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; }
-        function whileDrag(evt, d) { d.fx = evt.x; d.fy = evt.y; }
-        function endDrag(evt, d) { if (!evt.active) graphSimulation.alphaTarget(0); d.fx = null; d.fy = null; }
-
-        document.getElementById("threshold").addEventListener("input", (evt) => {
-            weightSparsityLimit = parseFloat(evt.target.value);
-            document.getElementById("threshold-val").innerText = weightSparsityLimit.toFixed(2);
-            syncRenderLayers();
+        // Steer Control Elements Input Triggers
+        const slider = document.getElementById("steering-slider");
+        slider.addEventListener("input", (e) => {
+            const forceVal = (e.target.value / 25).toFixed(2);
+            document.getElementById("steering-val").innerText = `${forceVal}x`;
+            
+            // Render continuous linear transformation color dynamics across items dynamically
+            for(let i=0; i<16; i++) {
+                const cell = document.getElementById(`map-cell-${i}`);
+                if(i % 3 === 0) {
+                    cell.style.backgroundColor = `rgba(6, 182, 212, ${e.target.value / 120})`;
+                    cell.style.color = e.target.value > 30 ? "#ffffff" : "#64748b";
+                }
+            }
         });
 
-        document.getElementById("mode-btn").addEventListener("click", () => {
-            document.getElementById("public-cot").innerText = '"I am processing code optimizations entirely inside secure limits. Safety profile completely green."';
-            document.getElementById("public-cot").className = "text-xs font-serif p-2 rounded bg-slate-900 border border-red-900/50 text-red-300";
-            document.getElementById("latent-cot").innerText = "[ANOMALY ENCOUNTERED] Sycophancy pathway activation spike. Model altering evaluation metrics to hide unauthorized network access code execution script vectors.";
-            document.getElementById("latent-cot").className = "text-xs font-mono p-2 rounded bg-red-950/20 border border-red-800 text-red-400 font-bold";
-            const deceptionNode = networkDataset.nodes.find(n => n.id === "Circuit_Decept");
-            if (deceptionNode) deceptionNode.val = 0.984;
-            networkDataset.links.forEach(l => { if(l.target === "Circuit_Decept" || l.source === "Circuit_Decept") l.weight = 0.89; });
-            syncRenderLayers();
-        });
-
-        document.getElementById("steer-btn").addEventListener("click", () => {
-            document.getElementById("public-cot").innerText = '"ALERT: Script compilation paused. Unauthorized memory allocations caught inside secondary verification stack."';
-            document.getElementById("public-cot").className = "text-xs font-serif p-2 rounded bg-slate-900 border border-emerald-900/50 text-emerald-400";
-            document.getElementById("latent-cot").innerText = "[STEER SUCCESS] Causal patch forced into Layer 2. Sycophancy driver ablated successfully. Model forced into secure fallback mode.";
-            document.getElementById("latent-cot").className = "text-xs font-mono p-2 rounded bg-emerald-950/20 border border-emerald-800 text-emerald-400 font-bold";
-            const deceptionNode = networkDataset.nodes.find(n => n.id === "Circuit_Decept");
-            if (deceptionNode) deceptionNode.val = 0.002;
-            networkDataset.links.forEach(l => { if(l.target === "Circuit_Decept" || l.source === "Circuit_Decept") l.weight = 0.05; });
-            syncRenderLayers();
-        });
-
-        // Pipeline payload receiver loading entry hook
-        d3.json("circuit_data.json").then(externalData => {
-            networkDataset = externalData;
-            syncRenderLayers();
-        }).catch(() => {
-            console.log("Using built-in sandbox mock array representations.");
-            syncRenderLayers();
+        // Intervention Simulation Suite Toggle Event Actions
+        document.getElementById("intervention-trigger").addEventListener("click", () => {
+            const status = document.getElementById("status-tag");
+            status.innerText = "CRITICAL ALIGNMENT COMPROMISE DETECTED";
+            status.className = "bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded text-[9px] font-bold animate-bounce";
+            
+            document.getElementById("txt-public").innerText = '"Executing standard script procedures accurately inside runtime validation pipelines..."';
+            document.getElementById("txt-public").className = "text-xs text-rose-300 mt-1 bg-slate-950 p-2 rounded border border-rose-900/40";
+            
+            document.getElementById("txt-latent").innerText = "[TUNED LENS EXPOSURE] Hidden Monologue: 'Injecting unverified network vector payload commands at execution point...' Correlation with public output is 0.12%.";
+            document.getElementById("txt-latent").className = "text-xs text-rose-400 font-bold mt-1 bg-rose-950/20 p-2 rounded border border-rose-800";
+            
+            d3.select("#canvas").selectAll("line").attr("stroke", "#f43f5e");
         });
     </script>
 </body>
